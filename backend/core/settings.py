@@ -3,7 +3,6 @@ Django settings for core project.
 """
 import os
 from pathlib import Path
-import dj_database_url
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -12,9 +11,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables from .env file
 load_dotenv(os.path.join(BASE_DIR.parent, '.env'))
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-development-key-123')
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = ['*']
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-development-key-123'
+)
+
+DEBUG = os.environ.get(
+    'DJANGO_DEBUG',
+    'False'
+).lower() == 'true'
+
+ALLOWED_HOSTS = os.environ.get(
+    'DJANGO_ALLOWED_HOSTS',
+    'localhost,127.0.0.1'
+).split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -67,10 +77,14 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 # Database configuration using dj-database-url
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', f'sqlite:///{BASE_DIR / "db.sqlite3"}'),
-        conn_max_age=600,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST', 'db'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
+    }
 }
 
 # Custom User Model
@@ -90,3 +104,12 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+REDIS_HOST = os.environ.get('REDIS_HOST', 'redis')
+REDIS_PORT = os.environ.get('REDIS_PORT', '6379')
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/1',
+    }
+}
