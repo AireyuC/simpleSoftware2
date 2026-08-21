@@ -26,7 +26,7 @@ La estrategia recomendada para que nadie se bloquee es la de **Módulos Vertical
 ### Desarrollador 1: Infraestructura Core y Autenticación
 **Rol principal:** Backend / Seguridad.
 - **Backend (Django):** 
-  - Extender el modelo de `User` de Django para incluir `telefono` y `correo`.
+  - Extender el modelo de `User` de Django para incluir `telefono`, `correo`, `rol` y `is_active`.
   - Configurar Strawberry GraphQL.
   - Implementar la mutación de **Login** (recomendado usar JWT para que React lo consuma fácilmente).
 - **Frontend (React):**
