@@ -1,4 +1,13 @@
+import { useNavigate } from "react-router-dom";
+
 function Navbar() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login", { replace: true });
+  };
+
   return (
     <header className="navbar">
       <div className="navbar-brand">
@@ -36,6 +45,14 @@ function Navbar() {
         >
           Usuarios
         </span>
+
+        <button 
+          onClick={handleLogout}
+          className="button secondary"
+          style={{ marginLeft: '15px' }}
+        >
+          Cerrar Sesión
+        </button>
       </nav>
     </header>
   );

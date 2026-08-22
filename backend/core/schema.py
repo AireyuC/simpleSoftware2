@@ -1,7 +1,7 @@
 import strawberry
 import strawberry_django
 
-from modules.users.graphql import UsuarioType
+from modules.users.graphql import UsuarioType, AuthMutation
 
 from modules.purchases.graphql import (
     ProveedorType,
@@ -29,7 +29,7 @@ class Query:
 
 
 @strawberry.type
-class Mutation(PurchasesMutation):
+class Mutation(PurchasesMutation, AuthMutation):
     pass
 
 

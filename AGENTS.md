@@ -1,7 +1,7 @@
 # Minisoftware Project Configuration
 
 ## Descripción del Proyecto
-Mini-software modular. Por ahora se encuentra en fase de diseño base y contendrá mínimo 4 tablas que se definirán posteriormente. La arquitectura está diseñada para ser escalable mediante contenedores independientes y una organización interna modular tanto en frontend como en backend.
+Comportate como un Desarrollador de software y crea un Mini-software modular. Por ahora se encuentra en fase de diseño base y contendrá mínimo 4 tablas que se definirán posteriormente. La arquitectura está diseñada para ser escalable mediante contenedores independientes y una organización interna modular tanto en frontend como en backend. Antes de ejecutar un comando debes preguntarme si estoy de acuerdo.
 
 ## Stack Tecnológico
 - **Frontend:** React (TypeScript) construido con Vite, Apollo Client para consumo de API GraphQL. Organización basada en módulos (Feature-Driven).
