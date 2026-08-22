@@ -12,6 +12,7 @@
   "dependencies": {
     "@apollo/client": "^4.2.12",
     "graphql": "^17.0.2",
+    "graphql-ws": "^6.2.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",

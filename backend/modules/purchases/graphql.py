@@ -5,6 +5,8 @@ import strawberry_django
 
 from django.db import transaction
 from django.db.models import Sum
+from django.core.cache import cache
+import redis
 
 from modules.users.models import Usuario
 from modules.users.graphql import UsuarioType
@@ -87,6 +89,22 @@ class CrearDetalleCompraInput:
     glosa: str
 
 
+@strawberry.input
+class CrearDetalleEnNotaInput:
+    proveedor_id: int
+    cantidad: int
+    precio_unitario: str
+    glosa: str
+
+
+@strawberry.input
+class CrearNotaConDetallesInput:
+    descripcion: str
+    usuario_id: int
+    detalles: list[CrearDetalleEnNotaInput]
+
+
+
 # ============================================================
 # INPUTS - EDITAR
 # ============================================================
@@ -121,6 +139,18 @@ class CambiarEstadoNotaInput:
 # ============================================================
 # FUNCIONES AUXILIARES
 # ============================================================
+
+import redis
+
+_redis_publisher = redis.Redis(host='redis', port=6379, db=2)
+
+def notificar_proveedores_actualizados():
+    from django.core.cache import cache
+    cache.delete("proveedores_activos")
+    try:
+        _redis_publisher.publish('proveedores_channel', 'RELOAD')
+    except Exception as e:
+        print(f"Error publishing to redis: {e}")
 
 
 def recalcular_total_nota(nota: NotaCompra) -> None:
@@ -202,6 +232,7 @@ class PurchasesMutation:
             is_active=True,
         )
 
+        notificar_proveedores_actualizados()
         return proveedor
 
     # ========================================================
@@ -269,6 +300,7 @@ class PurchasesMutation:
 
         proveedor.save()
 
+        notificar_proveedores_actualizados()
         return proveedor
 
     # ========================================================
@@ -295,6 +327,7 @@ class PurchasesMutation:
             update_fields=["is_active"]
         )
 
+        notificar_proveedores_actualizados()
         return proveedor
 
     # ========================================================
@@ -321,6 +354,7 @@ class PurchasesMutation:
             update_fields=["is_active"]
         )
 
+        notificar_proveedores_actualizados()
         return proveedor
 
     # ========================================================
@@ -371,6 +405,75 @@ class PurchasesMutation:
         )
 
         return nota
+
+    # ========================================================
+    # CREAR NOTA CON DETALLES (ATÓMICO)
+    # ========================================================
+
+    @strawberry.mutation
+    def crear_nota_con_detalles(
+        self,
+        data: CrearNotaConDetallesInput,
+    ) -> NotaCompraType:
+
+        with transaction.atomic():
+            descripcion = data.descripcion.strip()
+            if not descripcion:
+                raise ValueError("La descripción es obligatoria.")
+
+            usuario = Usuario.objects.filter(
+                pk=data.usuario_id,
+                is_active=True,
+            ).first()
+
+            if usuario is None:
+                raise ValueError("El usuario no existe o está inactivo.")
+
+            if not data.detalles:
+                raise ValueError("Debe incluir al menos un detalle de compra.")
+
+            nota = NotaCompra.objects.create(
+                descripcion=descripcion,
+                total=Decimal("0.00"),
+                estado="COMPLETADA",
+                usuario=usuario,
+            )
+
+            total = Decimal("0.00")
+            for det in data.detalles:
+                if det.cantidad <= 0:
+                    raise ValueError("La cantidad debe ser mayor a cero.")
+
+                precio = convertir_precio(det.precio_unitario)
+
+                proveedor = Proveedor.objects.filter(
+                    pk=det.proveedor_id,
+                    is_active=True,
+                ).first()
+
+                if proveedor is None:
+                    raise ValueError(f"El proveedor ID {det.proveedor_id} no existe o está inactivo.")
+
+                glosa = det.glosa.strip()
+                if not glosa:
+                    raise ValueError("La glosa es obligatoria en todos los detalles.")
+
+                subtotal = Decimal(det.cantidad) * precio
+                total += subtotal
+
+                DetalleCompra.objects.create(
+                    cantidad=det.cantidad,
+                    precio_unitario=precio,
+                    subtotal=subtotal,
+                    glosa=glosa,
+                    nota_compra=nota,
+                    proveedor=proveedor,
+                )
+
+            nota.total = total
+            nota.save(update_fields=["total"])
+
+            return nota
 
     # ========================================================
     # CAMBIAR ESTADO NOTA
@@ -633,6 +736,36 @@ class PurchasesMutation:
 
             detalle.delete()
 
-            recalcular_total_nota(nota)
-
             return True
+
+# ============================================================
+# SUBSCRIPTIONS (WebSockets + Redis Pub/Sub)
+# ============================================================
+import typing
+import asyncio
+import redis.asyncio as aioredis
+
+@strawberry.type
+class PurchasesSubscription:
+    @strawberry.subscription
+    async def proveedores_actualizados(self) -> typing.AsyncGenerator[str, None]:
+        client = None
+        try:
+            client = aioredis.Redis(host='redis', port=6379, db=2, health_check_interval=30)
+            pubsub = client.pubsub()
+            await pubsub.subscribe('proveedores_channel')
+            
+            async for message in pubsub.listen():
+                if message['type'] == 'message':
+                    yield message['data'].decode('utf-8')
+        except asyncio.CancelledError:
+            # Client disconnected naturally
+            pass
+        except Exception as e:
+            print(f"Redis Subscription Error: {e}")
+        finally:
+            if client:
+                try:
+                    await client.close()
+                except Exception:
+                    pass

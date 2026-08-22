@@ -1,7 +1,8 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 
 function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -25,26 +26,26 @@ function Navbar() {
       </div>
 
       <nav className="navbar-menu">
-        <a
-          href="#proveedores"
-          className="nav-item active"
+        <Link
+          to="/"
+          className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}
         >
           Proveedores
-        </a>
+        </Link>
 
-        <span
-          className="nav-item disabled"
-          title="Módulo pendiente"
+        <Link
+          to="/compras"
+          className={`nav-item ${location.pathname.startsWith('/compras') ? 'active' : ''}`}
         >
           Compras
-        </span>
+        </Link>
 
-        <span
-          className="nav-item disabled"
-          title="Módulo pendiente"
+        <Link
+          to="/usuarios"
+          className={`nav-item ${location.pathname.startsWith('/usuarios') ? 'active' : ''}`}
         >
           Usuarios
-        </span>
+        </Link>
 
         <button 
           onClick={handleLogout}

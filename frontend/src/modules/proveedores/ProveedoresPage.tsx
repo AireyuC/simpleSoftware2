@@ -1,6 +1,7 @@
 import {
   useMutation,
   useQuery,
+  useSubscription,
 } from "@apollo/client/react";
 
 import {
@@ -20,10 +21,10 @@ import {
   GET_PROVEEDORES,
   REACTIVAR_PROVEEDOR,
   UPDATE_PROVEEDOR,
+  PROVEEDOR_CREADO_SUBSCRIPTION,
 } from "./graphql";
 
 import type {
-  GetProveedoresData,
   Proveedor,
   ProveedorFormData,
 } from "./types";
@@ -62,9 +63,21 @@ function ProveedoresPage() {
     loading,
     error,
     refetch,
-  } = useQuery<GetProveedoresData>(
-    GET_PROVEEDORES
+  } = useQuery<any>(
+    GET_PROVEEDORES, {
+      fetchPolicy: "cache-and-network"
+    }
   );
+
+  const { error: subError } = useSubscription(PROVEEDOR_CREADO_SUBSCRIPTION, {
+    onData: () => {
+      refetch(); // Refrescar los datos de la caché (PostgreSQL -> Redis)
+    }
+  });
+
+  if (subError) {
+    console.error("Subscription Error: ", subError);
+  }
 
 
   const [

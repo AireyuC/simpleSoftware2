@@ -17,7 +17,7 @@ SECRET_KEY = os.environ.get(
 )
 
 DEBUG = os.environ.get(
-    'DJANGO_DEBUG',
+    'DEBUG',
     'False'
 ).lower() == 'true'
 
@@ -28,6 +28,8 @@ ALLOWED_HOSTS = os.environ.get(
 
 # Application definition
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -75,6 +77,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
+ASGI_APPLICATION = 'core.asgi.application'
 
 # Database configuration using dj-database-url
 DATABASES = {
@@ -114,3 +117,5 @@ CACHES = {
         'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/1',
     }
 }
+
+# No necesitamos CHANNEL_LAYERS porque usamos redis.asyncio directamente en GraphQL para PubSub.

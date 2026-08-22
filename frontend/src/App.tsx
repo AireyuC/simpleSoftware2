@@ -3,6 +3,9 @@ import Layout from "./components/layout/Layout";
 import ProveedoresPage from "./modules/proveedores/ProveedoresPage";
 import PrivateRoute from "./components/layout/PrivateRoute";
 import LoginPage from "./modules/auth/LoginPage";
+import ComprasPage from "./modules/compras/ComprasPage";
+import CompraForm from "./modules/compras/components/CompraForm";
+import UsuariosPage from "./modules/usuarios/UsuariosPage";
 
 function App() {
   return (
@@ -14,6 +17,21 @@ function App() {
           <Route path="/" element={
             <Layout>
               <ProveedoresPage />
+            </Layout>
+          } />
+          <Route path="/compras" element={
+            <Layout>
+              <ComprasPage />
+            </Layout>
+          } />
+          <Route path="/compras/nueva" element={
+            <Layout>
+              <CompraForm />
+            </Layout>
+          } />
+          <Route path="/usuarios" element={
+            <Layout>
+              <UsuariosPage />
             </Layout>
           } />
         </Route>

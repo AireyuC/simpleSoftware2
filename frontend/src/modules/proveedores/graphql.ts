@@ -85,3 +85,9 @@ export const REACTIVAR_PROVEEDOR = gql`
     }
   }
 `;
+
+export const PROVEEDOR_CREADO_SUBSCRIPTION = gql`
+  subscription ProveedorCreado {
+    proveedoresActualizados
+  }
+`;

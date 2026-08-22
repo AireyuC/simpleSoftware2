@@ -24,7 +24,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const [login, { loading }] = useMutation(LOGIN_MUTATION, {
-    onCompleted: (data) => {
+    onCompleted: (data: any) => {
       const token = data.login.token;
       if (token) {
         localStorage.setItem('token', token);
